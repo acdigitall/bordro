@@ -211,132 +211,259 @@ export default function EmployeesPage() {
                 </div>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      <th className="p-3">Sicil / TC No</th>
-                      <th className="p-3">Ad Soyad</th>
-                      <th className="p-3">Departman & Unvan</th>
-                      <th className="p-3">Çalışma Şekli</th>
-                      <th className="p-3 text-right">Aylık Brüt Maaş</th>
-                      <th className="p-3">Ödeme Bankası / IBAN</th>
-                      <th className="p-3 text-center">Durum</th>
-                      <th className="p-3 text-center">İşlemler</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {filteredEmployees.map((emp) => {
-                      const isTerminated = emp.status === 'TERMINATED' || emp.status === 'LEAVING';
+              <>
+                {/* MOBILE CARD VIEW (< md / Mobile Screens) */}
+                <div className="block md:hidden space-y-3 p-3 bg-slate-100/50 dark:bg-slate-950/50">
+                  {filteredEmployees.map((emp) => {
+                    const isTerminated = emp.status === 'TERMINATED' || emp.status === 'LEAVING';
+                    const empInitials = `${emp.firstName?.[0] || ''}${emp.lastName?.[0] || ''}`.toUpperCase();
 
-                      return (
-                        <tr
-                          key={emp.id}
-                          className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${
-                            isTerminated ? 'bg-rose-50/30 dark:bg-rose-950/20' : ''
-                          }`}
-                        >
-                          <td className="p-3">
-                            <span className="font-mono font-bold text-sky-600 dark:text-sky-400 block">
-                              {emp.employeeCode}
-                            </span>
-                            <span className="font-mono text-[10px] text-slate-400" title="KVKK Maskeli">
-                              {maskTcNo(emp.tcNo)}
-                            </span>
-                          </td>
+                    return (
+                      <div
+                        key={emp.id}
+                        className={`p-4 rounded-2xl border transition-all shadow-xs space-y-3.5 ${
+                          isTerminated
+                            ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/40'
+                            : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800'
+                        }`}
+                      >
+                        {/* Top Employee Header */}
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-3">
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-sky-500 to-blue-600 text-white font-mono font-bold text-xs flex items-center justify-center shadow-md shadow-sky-500/20">
+                              {empInitials || 'Ç'}
+                            </div>
+                            <div className="overflow-hidden">
+                              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
+                                {emp.firstName} {emp.lastName}
+                              </h3>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                {emp.departmentName} • {emp.title}
+                              </p>
+                            </div>
+                          </div>
 
-                          <td className="p-3 font-semibold text-slate-800 dark:text-slate-100">
-                            {emp.firstName} {emp.lastName}
-                            {emp.taxExemptionType && emp.taxExemptionType !== 'STANDARD' && (
-                              <span className="ml-1.5 text-[9px] bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800 font-mono">
-                                Engelli T.
-                              </span>
-                            )}
-                          </td>
-
-                          <td className="p-3">
-                            <span className="font-medium text-slate-700 dark:text-slate-300 block">
-                              {emp.departmentName}
-                            </span>
-                            <span className="text-[11px] text-slate-400">{emp.title}</span>
-                          </td>
-
-                          <td className="p-3">
-                            <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded font-medium text-[11px]">
-                              Tam Zamanlı
-                            </span>
-                          </td>
-
-                          <td className="p-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
-                            {formatCurrency(emp.baseSalary)}
-                          </td>
-
-                          <td className="p-3">
-                            <span className="font-medium text-slate-700 dark:text-slate-300 block text-[11px]">
-                              {emp.bankName}
-                            </span>
-                            <span className="font-mono text-[10px] text-slate-400 truncate max-w-[140px] block">
-                              {emp.iban}
-                            </span>
-                          </td>
-
-                          <td className="p-3 text-center">
+                          <div className="shrink-0">
                             {isTerminated ? (
-                              <span className="inline-flex items-center gap-1 bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 font-medium px-2 py-0.5 rounded text-[10px] border border-rose-200 dark:border-rose-800">
-                                İşten Ayrıldı
+                              <span className="inline-flex items-center gap-1 bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 font-bold px-2.5 py-1 rounded-full text-[10px] border border-rose-200 dark:border-rose-800">
+                                Ayrıldı
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-medium px-2 py-0.5 rounded text-[10px] border border-emerald-200 dark:border-emerald-800">
+                              <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold px-2.5 py-1 rounded-full text-[10px] border border-emerald-200 dark:border-emerald-800">
                                 Aktif
                               </span>
                             )}
-                          </td>
+                          </div>
+                        </div>
 
-                          <td className="p-3 text-center">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <button
-                                onClick={() => setSelectedPayslipEmp(emp)}
-                                className="p-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                                title="Maaş Pusulası Oluştur"
-                              >
-                                <FileText className="w-3.5 h-3.5" />
-                              </button>
+                        {/* Details Grid */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                              Sicil / TC No
+                            </span>
+                            <span className="font-mono font-bold text-sky-600 dark:text-sky-400 text-xs block">
+                              {emp.employeeCode}
+                            </span>
+                            <span className="font-mono text-[10px] text-slate-400">
+                              {maskTcNo(emp.tcNo)}
+                            </span>
+                          </div>
 
-                              <Link
-                                href={`/employees/severance?id=${emp.id}`}
-                                className="p-1 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors border border-amber-200 dark:border-amber-800"
-                                title="Kıdem / İhbar Tazminatı Hesabı & Çıkış"
-                              >
-                                <Users className="w-3.5 h-3.5" />
-                              </Link>
+                          <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                              Aylık Brüt Maaş
+                            </span>
+                            <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-xs block mt-0.5">
+                              {formatCurrency(emp.baseSalary)}
+                            </span>
+                          </div>
 
-                              <Link
-                                href={`/employees/new?id=${emp.id}`}
-                                className="p-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                                title="Düzenle"
-                              >
-                                <Edit className="w-3.5 h-3.5" />
-                              </Link>
-
-                              <button
-                                onClick={() => handleTerminateEmployee(emp)}
-                                className={`p-1 rounded transition-colors border ${
-                                  isTerminated
-                                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 hover:bg-emerald-100 border-emerald-200'
-                                    : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 hover:bg-rose-100 border-rose-200'
-                                }`}
-                                title={isTerminated ? 'Tekrar Aktif Yap' : 'İşten Çıkar (Pasife Al)'}
-                              >
-                                {isTerminated ? '✓' : '✕'}
-                              </button>
+                          <div className="col-span-2 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                              Ödeme Bankası & IBAN
+                            </span>
+                            <div className="flex items-center justify-between mt-0.5">
+                              <span className="font-medium text-slate-700 dark:text-slate-300 text-xs">
+                                {emp.bankName}
+                              </span>
+                              <span className="font-mono text-[10px] text-slate-400 truncate max-w-[170px]">
+                                {emp.iban}
+                              </span>
                             </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          </div>
+                        </div>
+
+                        {/* Mobile Action Buttons Bar */}
+                        <div className="pt-2 grid grid-cols-4 gap-2">
+                          <button
+                            onClick={() => setSelectedPayslipEmp(emp)}
+                            className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-[11px] font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                            Pusula
+                          </button>
+
+                          <Link
+                            href={`/employees/severance?id=${emp.id}`}
+                            className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 text-[11px] font-semibold hover:bg-amber-100 border border-amber-200 dark:border-amber-800 transition-colors"
+                          >
+                            <Users className="w-3.5 h-3.5" />
+                            Kıdem
+                          </Link>
+
+                          <Link
+                            href={`/employees/new?id=${emp.id}`}
+                            className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-[11px] font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                          >
+                            <Edit className="w-3.5 h-3.5 text-blue-600" />
+                            Düzenle
+                          </Link>
+
+                          <button
+                            onClick={() => handleTerminateEmployee(emp)}
+                            className={`flex items-center justify-center gap-1 py-2 px-2 rounded-xl text-[11px] font-semibold transition-colors border ${
+                              isTerminated
+                                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 hover:bg-emerald-100 border-emerald-200'
+                                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 hover:bg-rose-100 border-rose-200'
+                            }`}
+                          >
+                            {isTerminated ? '✓ Aktif' : '✕ Çıkar'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* DESKTOP TABLE VIEW (>= md / Desktop Screens) */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <th className="p-3">Sicil / TC No</th>
+                        <th className="p-3">Ad Soyad</th>
+                        <th className="p-3">Departman & Unvan</th>
+                        <th className="p-3">Çalışma Şekli</th>
+                        <th className="p-3 text-right">Aylık Brüt Maaş</th>
+                        <th className="p-3">Ödeme Bankası / IBAN</th>
+                        <th className="p-3 text-center">Durum</th>
+                        <th className="p-3 text-center">İşlemler</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {filteredEmployees.map((emp) => {
+                        const isTerminated = emp.status === 'TERMINATED' || emp.status === 'LEAVING';
+
+                        return (
+                          <tr
+                            key={emp.id}
+                            className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${
+                              isTerminated ? 'bg-rose-50/30 dark:bg-rose-950/20' : ''
+                            }`}
+                          >
+                            <td className="p-3">
+                              <span className="font-mono font-bold text-sky-600 dark:text-sky-400 block">
+                                {emp.employeeCode}
+                              </span>
+                              <span className="font-mono text-[10px] text-slate-400" title="KVKK Maskeli">
+                                {maskTcNo(emp.tcNo)}
+                              </span>
+                            </td>
+
+                            <td className="p-3 font-semibold text-slate-800 dark:text-slate-100">
+                              {emp.firstName} {emp.lastName}
+                              {emp.taxExemptionType && emp.taxExemptionType !== 'STANDARD' && (
+                                <span className="ml-1.5 text-[9px] bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800 font-mono">
+                                  Engelli T.
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="p-3">
+                              <span className="font-medium text-slate-700 dark:text-slate-300 block">
+                                {emp.departmentName}
+                              </span>
+                              <span className="text-[11px] text-slate-400">{emp.title}</span>
+                            </td>
+
+                            <td className="p-3">
+                              <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded font-medium text-[11px]">
+                                Tam Zamanlı
+                              </span>
+                            </td>
+
+                            <td className="p-3 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
+                              {formatCurrency(emp.baseSalary)}
+                            </td>
+
+                            <td className="p-3">
+                              <span className="font-medium text-slate-700 dark:text-slate-300 block text-[11px]">
+                                {emp.bankName}
+                              </span>
+                              <span className="font-mono text-[10px] text-slate-400 truncate max-w-[140px] block">
+                                {emp.iban}
+                              </span>
+                            </td>
+
+                            <td className="p-3 text-center">
+                              {isTerminated ? (
+                                <span className="inline-flex items-center gap-1 bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 font-medium px-2 py-0.5 rounded text-[10px] border border-rose-200 dark:border-rose-800">
+                                  İşten Ayrıldı
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-medium px-2 py-0.5 rounded text-[10px] border border-emerald-200 dark:border-emerald-800">
+                                  Aktif
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="p-3 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  onClick={() => setSelectedPayslipEmp(emp)}
+                                  className="p-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                  title="Maaş Pusulası Oluştur"
+                                >
+                                  <FileText className="w-3.5 h-3.5" />
+                                </button>
+
+                                <Link
+                                  href={`/employees/severance?id=${emp.id}`}
+                                  className="p-1 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors border border-amber-200 dark:border-amber-800"
+                                  title="Kıdem / İhbar Tazminatı Hesabı & Çıkış"
+                                >
+                                  <Users className="w-3.5 h-3.5" />
+                                </Link>
+
+                                <Link
+                                  href={`/employees/new?id=${emp.id}`}
+                                  className="p-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                  title="Düzenle"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </Link>
+
+                                <button
+                                  onClick={() => handleTerminateEmployee(emp)}
+                                  className={`p-1 rounded transition-colors border ${
+                                    isTerminated
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 hover:bg-emerald-100 border-emerald-200'
+                                      : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 hover:bg-rose-100 border-rose-200'
+                                  }`}
+                                  title={isTerminated ? 'Tekrar Aktif Yap' : 'İşten Çıkar (Pasife Al)'}
+                                >
+                                  {isTerminated ? '✓' : '✕'}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </main>
