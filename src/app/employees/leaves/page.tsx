@@ -68,54 +68,110 @@ export default function LeaveManagementPage() {
             </div>
           </div>
 
-          <div className="b2b-card rounded-lg overflow-hidden">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="p-3">Sicil / Personel</th>
-                  <th className="p-3">İşe Giriş Tarihi</th>
-                  <th className="p-3 text-center">Hizmet Süresi (Kıdem)</th>
-                  <th className="p-3 text-center">Yıllık İzin Hakedişi</th>
-                  <th className="p-3 text-center">Kullanılan İzin</th>
-                  <th className="p-3 text-center">Kalan İzin Bakiyesi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {employees.map((emp, index) => {
-                  const entitlement = calculateLeaveEntitlement(emp.hireDate);
-                  const usedDays = (index + 1) * 3; // Simulated used days
-                  const remainingDays = Math.max(0, entitlement.days - usedDays);
+          <div className="b2b-card rounded-xl overflow-hidden">
+            {/* MOBILE LIST VIEW (< md / Mobile Screens) */}
+            <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900">
+              {employees.map((emp, index) => {
+                const entitlement = calculateLeaveEntitlement(emp.hireDate);
+                const usedDays = (index + 1) * 3;
+                const remainingDays = Math.max(0, entitlement.days - usedDays);
+                const empInitials = `${emp.firstName?.[0] || ''}${emp.lastName?.[0] || ''}`.toUpperCase();
 
-                  return (
-                    <tr key={emp.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
-                      <td className="p-3">
-                        <span className="font-mono font-bold text-sky-600 dark:text-sky-400 block">
-                          {emp.employeeCode}
-                        </span>
-                        <span className="font-semibold text-slate-900 dark:text-slate-100">
-                          {emp.firstName} {emp.lastName}
-                        </span>
-                      </td>
-                      <td className="p-3 font-mono text-slate-600 dark:text-slate-400">
-                        {emp.hireDate}
-                      </td>
-                      <td className="p-3 text-center font-mono font-bold text-slate-800 dark:text-slate-200">
-                        {entitlement.years} Yıl
-                      </td>
-                      <td className="p-3 text-center font-mono font-bold text-sky-600 dark:text-sky-400">
-                        {entitlement.days} Gün
-                      </td>
-                      <td className="p-3 text-center font-mono font-semibold text-amber-600 dark:text-amber-400">
-                        {usedDays} Gün
-                      </td>
-                      <td className="p-3 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                        {remainingDays} Gün
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                return (
+                  <div key={emp.id} className="p-3.5 space-y-2.5">
+                    {/* Top Row: Employee & Tenure */}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 overflow-hidden">
+                        <div className="w-8 h-8 shrink-0 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-mono font-bold text-xs flex items-center justify-center">
+                          {empInitials || 'Ç'}
+                        </div>
+                        <div className="overflow-hidden">
+                          <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                            {emp.firstName} {emp.lastName}
+                          </h3>
+                          <span className="font-mono text-[10px] text-sky-600 dark:text-sky-400 font-bold block">
+                            {emp.employeeCode} • İşe Giriş: {emp.hireDate}
+                          </span>
+                        </div>
+                      </div>
+
+                      <span className="shrink-0 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        {entitlement.years} Yıl Kıdem
+                      </span>
+                    </div>
+
+                    {/* Bottom Metrics Bar */}
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono pt-1">
+                      <div className="bg-sky-50/60 dark:bg-sky-950/40 p-2 rounded-xl border border-sky-100 dark:border-sky-900/40">
+                        <span className="text-[9.5px] font-semibold text-slate-400 block uppercase">Hakediş</span>
+                        <span className="font-bold text-sky-600 dark:text-sky-400 text-xs">{entitlement.days} Gün</span>
+                      </div>
+
+                      <div className="bg-amber-50/60 dark:bg-amber-950/40 p-2 rounded-xl border border-amber-100 dark:border-amber-900/40">
+                        <span className="text-[9.5px] font-semibold text-slate-400 block uppercase">Kullanılan</span>
+                        <span className="font-bold text-amber-600 dark:text-amber-400 text-xs">{usedDays} Gün</span>
+                      </div>
+
+                      <div className="bg-emerald-50/60 dark:bg-emerald-950/40 p-2 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
+                        <span className="text-[9.5px] font-semibold text-slate-400 block uppercase">Kalan İzin</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs">{remainingDays} Gün</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DESKTOP TABLE VIEW (>= md / Desktop Screens) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="p-3">Sicil / Personel</th>
+                    <th className="p-3">İşe Giriş Tarihi</th>
+                    <th className="p-3 text-center">Hizmet Süresi (Kıdem)</th>
+                    <th className="p-3 text-center">Yıllık İzin Hakedişi</th>
+                    <th className="p-3 text-center">Kullanılan İzin</th>
+                    <th className="p-3 text-center">Kalan İzin Bakiyesi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {employees.map((emp, index) => {
+                    const entitlement = calculateLeaveEntitlement(emp.hireDate);
+                    const usedDays = (index + 1) * 3; // Simulated used days
+                    const remainingDays = Math.max(0, entitlement.days - usedDays);
+
+                    return (
+                      <tr key={emp.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                        <td className="p-3">
+                          <span className="font-mono font-bold text-sky-600 dark:text-sky-400 block">
+                            {emp.employeeCode}
+                          </span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-100">
+                            {emp.firstName} {emp.lastName}
+                          </span>
+                        </td>
+                        <td className="p-3 font-mono text-slate-600 dark:text-slate-400">
+                          {emp.hireDate}
+                        </td>
+                        <td className="p-3 text-center font-mono font-bold text-slate-800 dark:text-slate-200">
+                          {entitlement.years} Yıl
+                        </td>
+                        <td className="p-3 text-center font-mono font-bold text-sky-600 dark:text-sky-400">
+                          {entitlement.days} Gün
+                        </td>
+                        <td className="p-3 text-center font-mono font-semibold text-amber-600 dark:text-amber-400">
+                          {usedDays} Gün
+                        </td>
+                        <td className="p-3 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                          {remainingDays} Gün
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </main>
       </div>

@@ -206,14 +206,71 @@ function EmployeeFormContent() {
             </button>
           </div>
 
-          {/* 6-Tab Navigation Bar */}
-          <div className="flex border-b border-slate-200 dark:border-slate-800 space-x-2 overflow-x-auto pb-1">
+          {/* MOBILE STEP WIZARD BAR (< md / Mobile Screens) */}
+          <div className="block md:hidden bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <span className="w-6 h-6 rounded-full bg-sky-600 text-white font-mono text-xs font-bold flex items-center justify-center shrink-0">
+                  {activeTab}
+                </span>
+                <div className="overflow-hidden">
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block">
+                    Adım {activeTab} / {tabs.length}
+                  </span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate block">
+                    {tabs.find((t) => t.id === activeTab)?.name}
+                  </span>
+                </div>
+              </div>
+
+              <select
+                value={activeTab}
+                onChange={(e) => setActiveTab(Number(e.target.value))}
+                className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none cursor-pointer"
+              >
+                {tabs.map((t) => (
+                  <option key={t.id} value={t.id} className="bg-white dark:bg-slate-900">
+                    {t.id}. {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 6-Step Number Dots */}
+            <div className="flex items-center justify-between gap-1 pt-1">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                const isCompleted = activeTab > tab.id;
+
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all text-center border ${
+                      isActive
+                        ? 'bg-sky-600 text-white border-sky-600 shadow-xs scale-105'
+                        : isCompleted
+                        ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-transparent'
+                    }`}
+                  >
+                    {tab.id}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* DESKTOP 6-TAB NAVIGATION BAR (>= md / Desktop Screens) */}
+          <div className="hidden md:flex border-b border-slate-200 dark:border-slate-800 space-x-2 overflow-x-auto pb-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
+                  type="button"
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs font-semibold whitespace-nowrap transition-all border-b-2 ${
                     isActive
@@ -229,7 +286,7 @@ function EmployeeFormContent() {
           </div>
 
           {/* Form Content Area */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* TAB 1: Kişisel Bilgiler */}
               {activeTab === 1 && (
@@ -450,17 +507,46 @@ function EmployeeFormContent() {
                       <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                         İş Sözleşmesi, Kimlik Fotokopisi veya İkametgah Yükleyin
                       </p>
-                      <p className="text-[11px] text-slate-400">PDF, PNG, JPG (Maks. 10MB - S3/R2 Depolama)</p>
+                      <button
+                        type="button"
+                        className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-lg shadow"
+                      >
+                        Dosya Seç
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-lg shadow"
-                    >
-                      Dosya Seç
-                    </button>
                   </div>
                 </div>
               )}
+
+              {/* Step Navigation Controls Footer */}
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  disabled={activeTab === 1}
+                  onClick={() => setActiveTab((prev) => Math.max(1, prev - 1))}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  ← Önceki Adım
+                </button>
+
+                {activeTab < 6 ? (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab((prev) => Math.min(6, prev + 1))}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-sm transition-colors"
+                  >
+                    Sonraki Adım →
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white shadow-md transition-all flex items-center gap-1.5"
+                  >
+                    <Save className="w-4 h-4" /> Kaydet ve Tamamla
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         </main>
