@@ -17,7 +17,6 @@ import {
   Settings,
 } from 'lucide-react';
 import { INITIAL_PERIODS } from '@/lib/mock-data';
-import { Sidebar } from './sidebar';
 
 export function Header() {
   const pathname = usePathname();
@@ -29,6 +28,13 @@ export function Header() {
     setDarkMode(!darkMode);
     if (typeof document !== 'undefined') {
       document.documentElement.classList.toggle('dark');
+    }
+  };
+
+  const handleToggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'));
     }
   };
 
@@ -53,13 +59,11 @@ export function Header() {
 
   return (
     <>
-      <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
-
       <header className="h-14 min-h-[56px] bg-white dark:bg-slate-950 border-b border-slate-200/80 dark:border-slate-800 px-3 md:px-4 flex items-center justify-between sticky top-0 z-20 font-sans shadow-xs">
         {/* Mobile Hamburger & Breadcrumb */}
         <div className="flex items-center gap-2 text-xs">
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={handleToggleMobileMenu}
             className="md:hidden p-2 -ml-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             title="Menüyü Aç"
           >

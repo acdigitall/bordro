@@ -42,6 +42,25 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const [userRole, setUserRole] = useState('Yönetici');
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
+  const [internalMobileOpen, setInternalMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const handleToggle = () => setInternalMobileOpen((prev) => !prev);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('toggle-mobile-sidebar', handleToggle);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('toggle-mobile-sidebar', handleToggle);
+      }
+    };
+  }, []);
+
+  const isDrawerOpen = mobileOpen || internalMobileOpen;
+  const handleCloseDrawer = () => {
+    setInternalMobileOpen(false);
+    if (onMobileClose) onMobileClose();
+  };
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -379,11 +398,11 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       </div>
 
       {/* Mobile Drawer Overlay */}
-      {mobileOpen && (
+      {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           <div
             className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
-            onClick={onMobileClose}
+            onClick={handleCloseDrawer}
           />
           <div className="relative flex-1 max-w-xs w-full h-full z-10 animate-in slide-in-from-left duration-300">
             {sidebarContent}
