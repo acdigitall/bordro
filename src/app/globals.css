@@ -84,18 +84,16 @@
   background: #4b5563;
 }
 
-/* Print Specific Rules for Payslip PDFs */
-@media print {
-  body {
-    background: white !important;
-    color: black !important;
+/* Mobile Responsiveness & Bottom App Bar Spacing */
+@media (max-width: 1023px) {
+  main {
+    padding-bottom: 5rem !important;
   }
-  .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
+}
+
+/* Touch-friendly scrolling for horizontal tables */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
 }
 
 

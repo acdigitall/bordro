@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -7,22 +5,25 @@ import {
   Search,
   Bell,
   Calendar,
-  UserPlus,
   Play,
   Moon,
   Sun,
   ChevronRight,
+  Menu,
+  X,
+  LayoutDashboard,
+  Users,
+  CalendarCheck,
+  Settings,
 } from 'lucide-react';
 import { INITIAL_PERIODS } from '@/lib/mock-data';
+import { Sidebar } from './sidebar';
 
 export function Header() {
   const pathname = usePathname();
   const [selectedPeriod, setSelectedPeriod] = useState('2026-08');
   const [darkMode, setDarkMode] = useState(false);
-
-  const activePeriodObj = INITIAL_PERIODS.find(
-    (p) => `${p.year}-${String(p.month).padStart(2, '0')}` === selectedPeriod
-  ) || INITIAL_PERIODS[0];
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -42,74 +43,118 @@ export function Header() {
     return 'Ana Panel';
   };
 
+  const bottomNavItems = [
+    { label: 'Ana Panel', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Çalışanlar', href: '/employees', icon: Users },
+    { label: 'Veri Girişi', href: '/monthly-data', icon: CalendarCheck },
+    { label: 'Bordro', href: '/payroll/run', icon: Play },
+    { label: 'Ayarlar', href: '/settings', icon: Settings },
+  ];
+
   return (
-    <header className="h-13 min-h-[52px] bg-white dark:bg-slate-950 border-b border-slate-200/80 dark:border-slate-800/80 px-4 flex items-center justify-between sticky top-0 z-20 font-sans">
-      {/* Breadcrumb Context */}
-      <div className="flex items-center gap-2 text-xs">
-        <span className="text-slate-400 font-medium">Bordro</span>
-        <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600" />
-        <span className="font-semibold text-slate-800 dark:text-slate-100">
-          {getBreadcrumb()}
-        </span>
-      </div>
+    <>
+      <Sidebar mobileOpen={mobileMenuOpen} onMobileClose={() => setMobileMenuOpen(false)} />
 
-      {/* Command Search Trigger (Linear Style) */}
-      <div className="relative hidden md:block w-72">
-        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-        <input
-          type="text"
-          placeholder="Ara veya git... ⌘K"
-          className="w-full pl-8 pr-3 py-1 bg-slate-100/70 dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 rounded text-xs border border-transparent focus:border-slate-300 dark:focus:border-slate-700 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition-all placeholder:text-slate-400"
-        />
-      </div>
-
-      {/* Right Controls */}
-      <div className="flex items-center gap-3">
-        {/* Compact Period Selector */}
-        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
-          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-          <select
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="bg-transparent font-medium focus:outline-none cursor-pointer text-slate-800 dark:text-slate-200 text-xs"
+      <header className="h-14 min-h-[56px] bg-white dark:bg-slate-950 border-b border-slate-200/80 dark:border-slate-800 px-3 lg:px-4 flex items-center justify-between sticky top-0 z-20 font-sans shadow-xs">
+        {/* Mobile Hamburger & Breadcrumb */}
+        <div className="flex items-center gap-2 text-xs">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2 -ml-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            title="Menüyü Aç"
           >
-            {INITIAL_PERIODS.map((p) => (
-              <option key={p.id} value={`${p.year}-${String(p.month).padStart(2, '0')}`} className="bg-white dark:bg-slate-900">
-                {p.monthName}
-              </option>
-            ))}
-          </select>
-          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-mono">
-            ● Taslak
-          </span>
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 text-sky-600 dark:text-sky-400" />}
+          </button>
+
+          <div className="flex items-center gap-1.5 overflow-hidden">
+            <span className="text-slate-400 font-medium hidden sm:inline">Bordro</span>
+            <ChevronRight className="w-3 h-3 text-slate-300 dark:text-slate-600 hidden sm:inline" />
+            <span className="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm truncate">
+              {getBreadcrumb()}
+            </span>
+          </div>
         </div>
 
-        <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
+        {/* Command Search Trigger (Linear Style) */}
+        <div className="relative hidden xl:block w-64">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Ara veya git... ⌘K"
+            className="w-full pl-8 pr-3 py-1 bg-slate-100/70 dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 rounded-lg text-xs border border-transparent focus:border-slate-300 dark:focus:border-slate-700 focus:bg-white dark:focus:bg-slate-950 focus:outline-none transition-all placeholder:text-slate-400"
+          />
+        </div>
 
-        {/* Primary Action Button */}
-        <Link
-          href="/payroll/run"
-          className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded transition-colors shadow-none"
-        >
-          <Play className="w-3 h-3 fill-current" />
-          Bordro Hesapla
-        </Link>
+        {/* Right Controls */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Compact Period Selector */}
+          <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-800">
+            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <select
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="bg-transparent font-semibold focus:outline-none cursor-pointer text-slate-800 dark:text-slate-200 text-xs"
+            >
+              {INITIAL_PERIODS.map((p) => (
+                <option key={p.id} value={`${p.year}-${String(p.month).padStart(2, '0')}`} className="bg-white dark:bg-slate-900">
+                  {p.monthName}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Theme & Notifications */}
-        <button
-          onClick={toggleDarkMode}
-          className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
-          title="Koyu / Açık Tema"
-        >
-          {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
-        </button>
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
 
-        <button className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors relative">
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-sky-500" />
-        </button>
-      </div>
-    </header>
+          {/* Primary Action Button */}
+          <Link
+            href="/payroll/run"
+            className="flex items-center gap-1.5 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-sm shrink-0"
+          >
+            <Play className="w-3 h-3 fill-current" />
+            <span className="hidden xs:inline">Bordro Hesapla</span>
+          </Link>
+
+          {/* Theme & Notifications */}
+          <button
+            onClick={toggleDarkMode}
+            className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            title="Koyu / Açık Tema"
+          >
+            {darkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+          </button>
+
+          <button className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative hidden sm:block">
+            <Bell className="w-4 h-4" />
+            <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-sky-500" />
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile Fixed Bottom App Navigation Bar */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 flex items-center justify-around font-sans shadow-lg">
+        {bottomNavItems.map((item) => {
+          const isActive =
+            pathname === item.href ||
+            (item.href !== '/dashboard' && pathname.startsWith(item.href));
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
+                isActive
+                  ? 'text-sky-600 dark:text-sky-400 font-bold bg-sky-50 dark:bg-sky-950/60'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span className="text-[10px] mt-0.5 tracking-tight">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </>
   );
 }
 

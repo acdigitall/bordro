@@ -24,7 +24,12 @@ interface NavItem {
   submenu?: { title: string; href: string }[];
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -158,23 +163,25 @@ export function Sidebar() {
     .join('')
     .toUpperCase();
 
-  return (
-    <aside className="w-64 bg-[#10192B] text-[#AEB9CC] min-h-screen flex flex-col border-r border-[#24314A] select-none z-30 font-sans">
+  const sidebarContent = (
+    <aside className="w-64 bg-[#10192B] text-[#AEB9CC] h-full flex flex-col border-r border-[#24314A] select-none z-30 font-sans shadow-xl">
       {/* Workspace Header */}
-      <div className="px-4 py-4 border-b border-dashed border-[#24314A] flex items-center gap-3">
-        <div className="relative w-9 h-9 shrink-0 rounded-full border border-[#3C8562]/60 flex items-center justify-center">
-          <div className="absolute inset-[3px] rounded-full border border-dashed border-[#3C8562]/40" />
-          <span className="font-mono text-[10px] font-bold tracking-wider text-[#5FA07F]">
-            {companyInitials || 'TB'}
-          </span>
-        </div>
-        <div className="overflow-hidden">
-          <h1 className="text-[13.5px] font-bold text-[#EDEFF3] truncate leading-tight">
-            {companyName}
-          </h1>
-          <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-[#5FA07F]/90 truncate">
-            {INITIAL_COMPANY.planName}
-          </p>
+      <div className="px-4 py-4 border-b border-dashed border-[#24314A] flex items-center justify-between">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="relative w-9 h-9 shrink-0 rounded-full border border-[#3C8562]/60 flex items-center justify-center">
+            <div className="absolute inset-[3px] rounded-full border border-dashed border-[#3C8562]/40" />
+            <span className="font-mono text-[10px] font-bold tracking-wider text-[#5FA07F]">
+              {companyInitials || 'TB'}
+            </span>
+          </div>
+          <div className="overflow-hidden">
+            <h1 className="text-[13.5px] font-bold text-[#EDEFF3] truncate leading-tight">
+              {companyName}
+            </h1>
+            <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-[#5FA07F]/90 truncate">
+              {INITIAL_COMPANY.planName}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -195,7 +202,8 @@ export function Sidebar() {
                 <div key={item.href}>
                   <Link
                     href={item.href}
-                    className={`relative flex items-center gap-2.5 pl-3 pr-2.5 py-1.5 text-[12.5px] transition-colors ${
+                    onClick={() => onMobileClose && onMobileClose()}
+                    className={`relative flex items-center gap-2.5 pl-3 pr-2.5 py-2.5 lg:py-1.5 text-[13px] lg:text-[12.5px] transition-colors ${
                       isActive
                         ? 'text-[#EDEFF3] font-medium bg-[#1B2740]'
                         : 'text-[#8996AD] hover:text-[#D5DBE6] hover:bg-[#161F35]'
@@ -205,7 +213,7 @@ export function Sidebar() {
                       <span className="absolute left-0 top-0 bottom-0 w-[2.5px] bg-[#3C8562]" />
                     )}
                     <Icon
-                      className={`w-[15px] h-[15px] shrink-0 ${
+                      className={`w-[16px] h-[16px] shrink-0 ${
                         isActive ? 'text-[#5FA07F]' : 'text-[#4C5A75]'
                       }`}
                     />
@@ -220,7 +228,8 @@ export function Sidebar() {
                           <Link
                             key={sub.href}
                             href={sub.href}
-                            className={`block py-1 text-[11.5px] transition-colors ${
+                            onClick={() => onMobileClose && onMobileClose()}
+                            className={`block py-1.5 lg:py-1 text-[12px] lg:text-[11.5px] transition-colors ${
                               isSubActive
                                 ? 'text-[#5FA07F] font-medium'
                                 : 'text-[#6B7690] hover:text-[#B7C0D4]'
@@ -253,7 +262,8 @@ export function Sidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`relative flex items-center gap-2.5 pl-3 pr-2.5 py-1.5 text-[12.5px] rounded-sm border transition-colors ${
+                    onClick={() => onMobileClose && onMobileClose()}
+                    className={`relative flex items-center gap-2.5 pl-3 pr-2.5 py-2 lg:py-1.5 text-[12.5px] rounded-sm border transition-colors ${
                       isActive
                         ? 'text-[#D9B183] bg-[#2A2013]/60 border-[#B5793C]/40 font-medium'
                         : 'text-[#8996AD] border-transparent hover:text-[#D5DBE6] hover:bg-[#161F35]'
@@ -296,5 +306,27 @@ export function Sidebar() {
         </button>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex h-screen shrink-0 sticky top-0">
+        {sidebarContent}
+      </div>
+
+      {/* Mobile Drawer Overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
+            onClick={onMobileClose}
+          />
+          <div className="relative flex-1 max-w-xs w-full h-full z-10 animate-in slide-in-from-left duration-200">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
