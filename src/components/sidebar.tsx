@@ -17,6 +17,7 @@ import {
   ChevronDown,
   ChevronRight,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { INITIAL_COMPANY } from '@/lib/mock-data';
 
@@ -224,6 +225,15 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
             </p>
           </div>
         </div>
+
+        {/* Mobile Close X Button */}
+        <button
+          onClick={handleCloseDrawer}
+          className="md:hidden p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+          title="Menüyü Kapat"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Main Navigation List */}
@@ -401,12 +411,20 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           <div
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+            className="fixed inset-0 bg-slate-950/85 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
             onClick={handleCloseDrawer}
           />
           <div className="relative flex-1 max-w-xs w-full h-full z-10 animate-in slide-in-from-left duration-300">
             {sidebarContent}
           </div>
+          {/* Floating Close Button outside drawer */}
+          <button
+            onClick={handleCloseDrawer}
+            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-slate-900/90 text-slate-300 hover:text-white border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95"
+            title="Menüyü Kapat"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
       )}
     </>
