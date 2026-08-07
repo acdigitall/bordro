@@ -1,0 +1,283 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  TENANT_ADMIN
+  ACCOUNTANT
+  VIEWER
+}
+
+enum PayrollStatus {
+  DRAFT
+  APPROVED
+  AUTHORIZED
+  LOCKED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+}
+
+model Company {
+  id             String          @id @default(uuid())
+  name           String
+  taxOffice      String?
+  taxNo          String?
+  address        String?
+  logoUrl        String?
+  planId         String?
+  status         String          @default("ACTIVE") // ACTIVE, SUSPENDED
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  users          User[]
+  employees      Employee[]
+  departments    Department[]
+  banks          Bank[]
+  payrollPeriods PayrollPeriod[]
+  incomes        Income[]
+  overtimes      Overtime[]
+  commissions    Commission[]
+  deductions     Deduction[]
+  loans          Loan[]
+  taxSettings    TaxSetting[]
+  auditLogs      AuditLog[]
+}
+
+model User {
+  id           String    @id @default(uuid())
+  companyId    String?   // null for SUPER_ADMIN
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(TENANT_ADMIN)
+  status       String    @default("ACTIVE")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  company      Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  auditLogs    AuditLog[]
+}
+
+model Employee {
+  id                String          @id @default(uuid())
+  companyId         String
+  employeeCode      String
+  tcNo              String
+  firstName         String
+  lastName          String
+  gender            String?
+  birthDate         DateTime?
+  departmentId      String?
+  title             String?
+  employmentType    EmploymentType  @default(FULL_TIME)
+  hireDate          DateTime
+  status            String          @default("ACTIVE") // ACTIVE, LEAVING, TERMINATED
+  baseSalary        Float           // Monthly Gross Base Salary in TRY
+  currency          String          @default("TRY")
+  bankId            String?
+  iban              String?
+  taxExemptionType  String          @default("STANDARD") // STANDARD, DISABLED_1, DISABLED_2, DISABLED_3
+  cumulativeMatrah  Float           @default(0.0)       // Cumulative Income Tax Matrah in current year
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  company           Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department        Department?     @relation(fields: [departmentId], references: [id])
+  bank              Bank?           @relation(fields: [bankId], references: [id])
+  payrollEntries    PayrollEntry[]
+  incomes           Income[]
+  overtimes         Overtime[]
+  commissions       Commission[]
+  deductions        Deduction[]
+  loans             Loan[]
+}
+
+model Department {
+  id        String     @id @default(uuid())
+  companyId String
+  name      String
+  createdAt DateTime   @default(now())
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employees Employee[]
+}
+
+model Bank {
+  id        String     @id @default(uuid())
+  companyId String
+  name      String
+  swiftCode String?
+  iban      String?
+  createdAt DateTime   @default(now())
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employees Employee[]
+}
+
+model PayrollPeriod {
+  id        String        @id @default(uuid())
+  companyId String
+  month     Int           // 1 - 12
+  year      Int           // 2026 etc.
+  status    PayrollStatus @default(DRAFT)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  company   Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  entries   PayrollEntry[]
+
+  @@unique([companyId, month, year])
+}
+
+model PayrollEntry {
+  id                  String        @id @default(uuid())
+  periodId            String
+  employeeId          String
+  grossSalary         Float
+  totalIncome         Float         @default(0)
+  overtimeAmount      Float         @default(0)
+  commissionAmount    Float         @default(0)
+  totalDeduction      Float         @default(0)
+  loanInstallment     Float         @default(0)
+  sgkEmployee         Float         // 14%
+  unemploymentEmployee Float        // 1%
+  sgkEmployer         Float         // 15.5% or 20.5%
+  unemploymentEmployer Float        // 2%
+  incomeTaxMatrah     Float
+  cumulativeTaxMatrah Float         // Before calculation
+  incomeTax           Float         // Calculated income tax after exemption
+  stampTax            Float         // Calculated stamp tax after exemption
+  minWageExemptionGV  Float         @default(0)
+  minWageExemptionDV  Float         @default(0)
+  netSalary           Float
+  notes               String?
+  createdAt           DateTime      @default(now())
+
+  period              PayrollPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  employee            Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model Income {
+  id          String   @id @default(uuid())
+  companyId   String
+  employeeId  String
+  periodMonth Int
+  periodYear  Int
+  type        String   // Ikramiye, Huzur Hakki, vb.
+  amount      Float
+  isTaxable   Boolean  @default(true)
+  isSgk       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model Overtime {
+  id          String   @id @default(uuid())
+  companyId   String
+  employeeId  String
+  periodMonth Int
+  periodYear  Int
+  hours       Float
+  multiplier  Float    @default(1.5) // %50 zamli
+  amount      Float
+  createdAt   DateTime @default(now())
+
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model Commission {
+  id          String   @id @default(uuid())
+  companyId   String
+  employeeId  String
+  periodMonth Int
+  periodYear  Int
+  type        String   // Satis Primi, Performans
+  amount      Float
+  isTaxable   Boolean  @default(true)
+  isSgk       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model Deduction {
+  id          String   @id @default(uuid())
+  companyId   String
+  employeeId  String
+  periodMonth Int
+  periodYear  Int
+  type        String   // Icra, Nafaka, Sendika, Ozel Saglik
+  amount      Float
+  createdAt   DateTime @default(now())
+
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model Loan {
+  id              String   @id @default(uuid())
+  companyId       String
+  employeeId      String
+  totalAmount     Float
+  monthlyAmount   Float
+  remainingMonths Int
+  status          String   @default("ACTIVE") // ACTIVE, COMPLETED
+  createdAt       DateTime @default(now())
+
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model TaxSetting {
+  id                     String   @id @default(uuid())
+  companyId              String?  // null for system default
+  year                   Int
+  minimumGrossWage       Float    @default(20002.50) // 2025/2026 baseline
+  sgkCeiling             Float    @default(150018.75)
+  sgkEmployeeRate        Float    @default(0.14)
+  unemploymentEmployeeRate Float  @default(0.01)
+  sgkEmployerRate        Float    @default(0.155) // Incentive rate
+  unemploymentEmployerRate Float  @default(0.02)
+  stampTaxRate           Float    @default(0.00759)
+  bracketsJson           String   // JSON string storing tax brackets: [{limit: 110000, rate: 0.15}, ...]
+  updatedAt              DateTime @updatedAt
+
+  company                Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  companyId String?
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  createdAt DateTime @default(now())
+
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model SubscriptionPlan {
+  id           String   @id @default(uuid())
+  name         String   // Baslangic, Profesyonel, Kurumsal
+  maxEmployees Int
+  priceMonthly Float
+  featuresJson String   // JSON array of feature flags
+  createdAt    DateTime @default(now())
+}
