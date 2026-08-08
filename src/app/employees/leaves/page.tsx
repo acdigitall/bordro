@@ -69,53 +69,54 @@ export default function LeaveManagementPage() {
           </div>
 
           <div className="b2b-card rounded-xl overflow-hidden">
-            {/* MOBILE LIST VIEW (< md / Mobile Screens) */}
-            <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900">
+            {/* NATIVE MOBILE LIST VIEW (< md / Mobile Screens) */}
+            <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800">
               {employees.map((emp, index) => {
                 const entitlement = calculateLeaveEntitlement(emp.hireDate);
                 const usedDays = (index + 1) * 3;
                 const remainingDays = Math.max(0, entitlement.days - usedDays);
                 const empInitials = `${emp.firstName?.[0] || ''}${emp.lastName?.[0] || ''}`.toUpperCase();
+                const usedPercentage = entitlement.days > 0 ? Math.min(100, Math.round((usedDays / entitlement.days) * 100)) : 0;
 
                 return (
-                  <div key={emp.id} className="p-3.5 space-y-2.5">
-                    {/* Top Row: Employee & Tenure */}
+                  <div key={emp.id} className="p-3.5 space-y-2">
+                    {/* Employee Row */}
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5 overflow-hidden">
-                        <div className="w-8 h-8 shrink-0 rounded-full bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-mono font-bold text-xs flex items-center justify-center">
+                        <div className="w-8 h-8 shrink-0 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-mono font-bold text-xs flex items-center justify-center">
                           {empInitials || 'Ç'}
                         </div>
                         <div className="overflow-hidden">
-                          <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
-                            {emp.firstName} {emp.lastName}
-                          </h3>
-                          <span className="font-mono text-[10px] text-sky-600 dark:text-sky-400 font-bold block">
-                            {emp.employeeCode} • İşe Giriş: {emp.hireDate}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
+                              {emp.firstName} {emp.lastName}
+                            </h3>
+                            <span className="font-mono text-[10px] text-sky-600 dark:text-sky-400 font-bold shrink-0">
+                              {emp.employeeCode}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                            Giriş: {emp.hireDate} • {entitlement.years} Yıl Kıdem
+                          </p>
                         </div>
                       </div>
 
-                      <span className="shrink-0 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        {entitlement.years} Yıl Kıdem
-                      </span>
+                      <div className="text-right shrink-0">
+                        <div className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs">
+                          {remainingDays} Gün Kalan
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                          {entitlement.days} Hakediş • {usedDays} Kullanılan
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Bottom Metrics Bar */}
-                    <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono pt-1">
-                      <div className="bg-sky-50/60 dark:bg-sky-950/40 p-2 rounded-xl border border-sky-100 dark:border-sky-900/40">
-                        <span className="text-[9.5px] font-semibold text-slate-400 block uppercase">Hakediş</span>
-                        <span className="font-bold text-sky-600 dark:text-sky-400 text-xs">{entitlement.days} Gün</span>
-                      </div>
-
-                      <div className="bg-amber-50/60 dark:bg-amber-950/40 p-2 rounded-xl border border-amber-100 dark:border-amber-900/40">
-                        <span className="text-[9.5px] font-semibold text-slate-400 block uppercase">Kullanılan</span>
-                        <span className="font-bold text-amber-600 dark:text-amber-400 text-xs">{usedDays} Gün</span>
-                      </div>
-
-                      <div className="bg-emerald-50/60 dark:bg-emerald-950/40 p-2 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
-                        <span className="text-[9.5px] font-semibold text-slate-400 block uppercase">Kalan İzin</span>
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs">{remainingDays} Gün</span>
-                      </div>
+                    {/* Progress Fill Line */}
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1 overflow-hidden">
+                      <div
+                        className="bg-emerald-500 h-full rounded-full transition-all"
+                        style={{ width: `${100 - usedPercentage}%` }}
+                      />
                     </div>
                   </div>
                 );
