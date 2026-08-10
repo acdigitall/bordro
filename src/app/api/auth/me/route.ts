@@ -59,6 +59,14 @@ export async function GET() {
 export async function POST() {
   const cookieStore = cookies();
   cookieStore.delete('auth_session');
+  cookieStore.set('auth_session', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+    expires: new Date(0),
+  });
   return NextResponse.json({ success: true, redirectUrl: '/login' });
 }
 

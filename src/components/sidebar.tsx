@@ -111,10 +111,17 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/me', { method: 'POST' });
-      router.push('/login');
-      router.refresh();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      } else {
+        router.push('/login');
+      }
     } catch {
-      router.push('/login');
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      } else {
+        router.push('/login');
+      }
     }
   };
 
