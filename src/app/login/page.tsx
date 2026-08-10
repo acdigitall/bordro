@@ -42,8 +42,8 @@ function AuthContent() {
 
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
 
-  const [email, setEmail] = useState('admin@teknoloji.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const [companyName, setCompanyName] = useState('');
@@ -249,7 +249,7 @@ function AuthContent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={inputCls}
-                  placeholder="admin@teknoloji.com"
+                  placeholder="ornek@sirketiniz.com"
                   required
                 />
               </Field>
@@ -282,8 +282,21 @@ function AuthContent() {
                 </div>
               </Field>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-3">
                 <SubmitButton loading={loading} idleLabel="Sisteme Giriş Yap" busyLabel="Giriş Yapılıyor..." />
+
+                <div className="pt-2 border-t border-[#E3DDD0]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail('admin@teknoloji.com');
+                      setPassword('admin123');
+                    }}
+                    className="w-full text-[11px] text-[#6B7690] hover:text-[#10192B] bg-[#EFECE6] hover:bg-[#E3DDD0] py-2 px-3 rounded-lg transition-colors font-medium text-center"
+                  >
+                    Örnek / Demo Hesabı İle Doldur (Keban Ltd. Şti.)
+                  </button>
+                </div>
               </div>
             </form>
           ) : (

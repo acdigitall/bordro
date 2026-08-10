@@ -27,10 +27,12 @@ export default function RunPayrollPage() {
   const [selectedPayslipEmp, setSelectedPayslipEmp] = useState<EmployeeMock | null>(null);
   const [selectedPayslipMonthly, setSelectedPayslipMonthly] = useState<any>(null);
 
-  // Selection & Filtering States
+  // Selection & Filtering & Period Lock States
   const [selectedEmpIds, setSelectedEmpIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
+  const [activePeriod, setActivePeriod] = useState('2026-08');
+  const [isPeriodLocked, setIsPeriodLocked] = useState(false);
 
   const [monthlyMap, setMonthlyMap] = useState<{
     overtime: { [empId: string]: number };
@@ -41,6 +43,13 @@ export default function RunPayrollPage() {
   }>({ overtime: {}, incomes: {}, commissions: {}, deductions: {}, loans: {} });
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const p = localStorage.getItem('active_payroll_period') || '2026-08';
+      setActivePeriod(p);
+      const isLoc = localStorage.getItem(`payroll_status_${p}`) === 'LOCKED';
+      setIsPeriodLocked(isLoc);
+    }
+
     fetch('/api/auth/me')
       .then((res) => res.json())
       .then((data) => {
@@ -230,6 +239,36 @@ export default function RunPayrollPage() {
         <Header />
 
         <main className="flex-1 overflow-y-auto p-6 space-y-5">
+          {/* Locked Period Banner */}
+          {isPeriodLocked && (
+            <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900 dark:text-amber-200 text-xs shadow-xs animate-in fade-in">
+              <div className="flex items-center gap-2.5">
+                <span className="p-1.5 rounded bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 font-bold shrink-0">
+                  🔒 KİLİTLİ DÖNEM
+                </span>
+                <div>
+                  <h4 className="font-bold">{activePeriod} Dönem Bordrosu Yetkilendirilmiş ve Kilitlenmiştir</h4>
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
+                    Bu döneme ait bordro verileri dondurulmuştur ve salt okunurdur. Yeni işlem için lütfen sonraki döneme geçin.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('active_payroll_period', '2026-09');
+                  }
+                  window.location.reload();
+                }}
+                className="flex items-center justify-center gap-1.5 bg-amber-700 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-bold px-3.5 py-2 rounded-md transition-colors shrink-0 shadow-xs cursor-pointer"
+              >
+                <span>Eylül 2026 Bordrosuna Geç</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Header & Stepper */}
           <div className="b2b-card p-5 rounded-lg space-y-4 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -239,22 +278,28 @@ export default function RunPayrollPage() {
                   1. Aşama: Bordro Hazırlığı & Kişi Seçim Matrisi
                 </h1>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Ağustos 2026 dönemi bordro hesaplanacak çalışanları seçin ve Brüt &rarr; Net sonuçları inceleyin
+                  {activePeriod} dönemi bordro hesaplanacak çalışanları seçin ve Brüt &rarr; Net sonuçları inceleyin
                 </p>
               </div>
 
-              <button
-                onClick={handleProceedToApprove}
-                disabled={selectedEmpIds.length === 0}
-                className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-lg transition-all shadow-sm ${
-                  selectedEmpIds.length > 0
-                    ? 'bg-sky-600 hover:bg-sky-500 text-white cursor-pointer active:scale-95'
-                    : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
-                }`}
-              >
-                <span>2. Aşamaya Geç ({selectedEmpIds.length} Kişi)</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+              {isPeriodLocked ? (
+                <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700">
+                  🔒 Dönem Kilitli (Salt Okunur)
+                </span>
+              ) : (
+                <button
+                  onClick={handleProceedToApprove}
+                  disabled={selectedEmpIds.length === 0}
+                  className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-lg transition-all shadow-sm ${
+                    selectedEmpIds.length > 0
+                      ? 'bg-sky-600 hover:bg-sky-500 text-white cursor-pointer active:scale-95'
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+                  }`}
+                >
+                  <span>2. Aşamaya Geç ({selectedEmpIds.length} Kişi)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
             {/* Stepper Steps */}

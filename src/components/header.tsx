@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -22,8 +22,37 @@ import { INITIAL_PERIODS } from '@/lib/mock-data';
 export function Header() {
   const pathname = usePathname();
   const [selectedPeriod, setSelectedPeriod] = useState('2026-08');
+  const [isLocked, setIsLocked] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      const activeP = localStorage.getItem('active_payroll_period');
+      if (activeP) setSelectedPeriod(activeP);
+
+      const checkLock = () => {
+        const p = localStorage.getItem('active_payroll_period') || '2026-08';
+        const isLoc = localStorage.getItem(`payroll_status_${p}`) === 'LOCKED';
+        setIsLocked(isLoc);
+      };
+      checkLock();
+      window.addEventListener('storage', checkLock);
+      return () => window.removeEventListener('storage', checkLock);
+    }
+  }, []);
+
+  const handlePeriodChange = (newPeriod: string) => {
+    setSelectedPeriod(newPeriod);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('active_payroll_period', newPeriod);
+      const isLoc = localStorage.getItem(`payroll_status_${newPeriod}`) === 'LOCKED';
+      setIsLocked(isLoc);
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -98,14 +127,18 @@ export function Header() {
             <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <select
               value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value)}
+              onChange={(e) => handlePeriodChange(e.target.value)}
               className="bg-transparent font-semibold focus:outline-none cursor-pointer text-slate-800 dark:text-slate-200 text-xs"
             >
-              {INITIAL_PERIODS.map((p) => (
-                <option key={p.id} value={`${p.year}-${String(p.month).padStart(2, '0')}`} className="bg-white dark:bg-slate-900">
-                  {p.monthName}
-                </option>
-              ))}
+              {INITIAL_PERIODS.map((p) => {
+                const val = `${p.year}-${String(p.month).padStart(2, '0')}`;
+                const locked = mounted && localStorage.getItem(`payroll_status_${val}`) === 'LOCKED';
+                return (
+                  <option key={p.id} value={val} className="bg-white dark:bg-slate-900">
+                    {locked ? `🔒 ${p.monthName} (Kilitli)` : p.monthName}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
