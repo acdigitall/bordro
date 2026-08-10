@@ -1,18 +1,20 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { getSessionUser, hasRole } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
-  const cookieStore = cookies();
-  const session = cookieStore.get('auth_session');
+  const sessionUser = await getSessionUser();
 
-  if (!session?.value) {
+  if (!sessionUser) {
     return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
   }
 
+  if (!hasRole(sessionUser, ['TENANT_ADMIN', 'SUPER_ADMIN'])) {
+    return NextResponse.json({ error: 'Yedek alma yetkiniz bulunmamaktadır.' }, { status: 403 });
+  }
+
   try {
-    const sessionUser = JSON.parse(session.value);
-    const companyId = sessionUser?.companyId;
+    const companyId = sessionUser.companyId;
 
     if (!companyId) {
       return NextResponse.json({ error: 'Şirket bulunamadı.' }, { status: 400 });

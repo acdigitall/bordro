@@ -1,18 +1,15 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { getSessionUser, clearSessionCookie } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
-  const cookieStore = cookies();
-  const session = cookieStore.get('auth_session');
+  const sessionUser = await getSessionUser();
 
-  if (!session?.value) {
+  if (!sessionUser) {
     return NextResponse.json({ authenticated: false, user: null, company: null });
   }
 
   try {
-    const sessionUser = JSON.parse(session.value);
-
     // Fetch fresh user and company from DB if possible
     if (sessionUser?.id) {
       const dbUser = await prisma.user.findUnique({
@@ -57,16 +54,6 @@ export async function GET() {
 }
 
 export async function POST() {
-  const cookieStore = cookies();
-  cookieStore.delete('auth_session');
-  cookieStore.set('auth_session', '', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 0,
-    expires: new Date(0),
-  });
+  clearSessionCookie();
   return NextResponse.json({ success: true, redirectUrl: '/login' });
 }
-

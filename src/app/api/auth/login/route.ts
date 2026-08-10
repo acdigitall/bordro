@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { cookies } from 'next/headers';
+import { verifyPassword, hashPassword, signJWT, setSessionCookie, SessionUser } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -14,70 +14,6 @@ export async function POST(request: Request) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
-
-    // Check if logging in as Super Admin (cagataydalaman@outlook.com)
-    if (cleanEmail === 'cagataydalaman@outlook.com') {
-      if (password !== '12345678') {
-        return NextResponse.json(
-          { error: 'Süper Admin şifreniz hatalı.' },
-          { status: 401 }
-        );
-      }
-
-      // Upsert Super Admin user in DB
-      let superUser;
-      try {
-        superUser = await prisma.user.upsert({
-          where: { email: 'cagataydalaman@outlook.com' },
-          update: {
-            passwordHash: '12345678',
-            role: 'SUPER_ADMIN',
-            status: 'ACTIVE',
-          },
-          create: {
-            name: 'Çağatay Dalaman',
-            email: 'cagataydalaman@outlook.com',
-            passwordHash: '12345678',
-            role: 'SUPER_ADMIN',
-            status: 'ACTIVE',
-          },
-        });
-      } catch (e) {
-        console.error('Super Admin DB upsert error:', e);
-        superUser = {
-          id: 'super-admin-01',
-          name: 'Çağatay Dalaman',
-          email: 'cagataydalaman@outlook.com',
-          role: 'SUPER_ADMIN',
-          companyId: null,
-          company: null,
-        };
-      }
-
-      const sessionData = {
-        id: superUser.id,
-        name: superUser.name,
-        email: superUser.email,
-        role: 'SUPER_ADMIN',
-        companyId: null,
-        companyName: 'Bordro SaaS Sistem Yönetimi',
-      };
-
-      const cookieStore = cookies();
-      cookieStore.set('auth_session', JSON.stringify(sessionData), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 7,
-      });
-
-      return NextResponse.json({
-        success: true,
-        user: sessionData,
-        redirectUrl: '/admin',
-      });
-    }
 
     // Search user in DB
     const user = await prisma.user.findUnique({
@@ -94,12 +30,22 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check password (In production, use bcrypt.compare)
-    if (user.passwordHash !== password) {
+    // Verify password securely using bcrypt/fallback
+    const isValidPassword = await verifyPassword(password, user.passwordHash);
+    if (!isValidPassword) {
       return NextResponse.json(
         { error: 'Şifreniz hatalı. Lütfen tekrar deneyiniz.' },
         { status: 401 }
       );
+    }
+
+    // Upgrade unhashed legacy password to bcrypt hash in DB
+    if (!user.passwordHash.startsWith('$2a$') && !user.passwordHash.startsWith('$2b$')) {
+      const newHash = await hashPassword(password);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: newHash },
+      }).catch((e) => console.error('Failed to auto-upgrade password hash:', e));
     }
 
     if (user.status !== 'ACTIVE') {
@@ -109,24 +55,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // Set session cookie
-    const sessionData = {
+    // Prepare session data
+    const sessionData: SessionUser = {
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
       companyId: user.companyId,
-      companyName: user.company?.name || 'Sistem Admin',
+      companyName: user.company?.name || (user.role === 'SUPER_ADMIN' ? 'Bordro SaaS Sistem Yönetimi' : 'Şirketiniz'),
     };
 
-    const cookieStore = cookies();
-    cookieStore.set('auth_session', JSON.stringify(sessionData), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-    });
+    // Sign JWT token
+    const token = await signJWT(sessionData);
+
+    // Set HTTP-Only signed cookie
+    setSessionCookie(token);
 
     const redirectUrl = user.role === 'SUPER_ADMIN' ? '/admin' : '/dashboard';
 
@@ -143,4 +86,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

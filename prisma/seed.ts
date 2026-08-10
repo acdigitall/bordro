@@ -1,12 +1,13 @@
 import { PrismaClient, Role, EmploymentType } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding database...');
+  console.log('Seeding database with secure hashed passwords...');
 
   // 1. Create Tax Settings for 2026
-  const taxSetting = await prisma.taxSetting.create({
+  await prisma.taxSetting.create({
     data: {
       year: 2026,
       minimumGrossWage: 20002.5,
@@ -37,18 +38,32 @@ async function main() {
     },
   });
 
+  // Hash initial passwords using bcrypt
+  const hashedAdminPassword = await bcrypt.hash('admin123', 10);
+  const hashedSuperPassword = await bcrypt.hash('12345678', 10);
+
   // 3. Create Admin User
   const adminUser = await prisma.user.create({
     data: {
       companyId: company.id,
       name: 'Ahmet Yılmaz',
       email: 'admin@teknoloji.com',
-      passwordHash: 'admin123', // In production use bcrypt
+      passwordHash: hashedAdminPassword,
       role: Role.TENANT_ADMIN,
     },
   });
 
-  // 4. Create Department
+  // 4. Create Super Admin User
+  const superUser = await prisma.user.create({
+    data: {
+      name: 'Çağatay Dalaman',
+      email: 'cagataydalaman@outlook.com',
+      passwordHash: hashedSuperPassword,
+      role: Role.SUPER_ADMIN,
+    },
+  });
+
+  // 5. Create Department
   const deptDev = await prisma.department.create({
     data: {
       companyId: company.id,
@@ -56,7 +71,7 @@ async function main() {
     },
   });
 
-  // 5. Create Sample Employee
+  // 6. Create Sample Employee
   const employee = await prisma.employee.create({
     data: {
       companyId: company.id,
@@ -76,6 +91,7 @@ async function main() {
   console.log('Seed data created successfully!');
   console.log(`Company ID: ${company.id}`);
   console.log(`Admin User: ${adminUser.email}`);
+  console.log(`Super Admin User: ${superUser.email}`);
   console.log(`Sample Employee: ${employee.firstName} ${employee.lastName}`);
 }
 

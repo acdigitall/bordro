@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { getSessionUser, hasRole, signJWT, setSessionCookie } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
-  const cookieStore = cookies();
-  const session = cookieStore.get('auth_session');
+  const sessionUser = await getSessionUser();
 
-  if (!session?.value) {
+  if (!sessionUser) {
     return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
   }
 
   try {
-    const sessionUser = JSON.parse(session.value);
-    const companyId = sessionUser?.companyId;
+    const companyId = sessionUser.companyId;
 
     if (!companyId) {
       return NextResponse.json({ error: 'Şirket bulunamadı.' }, { status: 400 });
@@ -47,16 +45,18 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const cookieStore = cookies();
-  const session = cookieStore.get('auth_session');
+  const sessionUser = await getSessionUser();
 
-  if (!session?.value) {
+  if (!sessionUser) {
     return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 401 });
   }
 
+  if (!hasRole(sessionUser, ['TENANT_ADMIN', 'SUPER_ADMIN'])) {
+    return NextResponse.json({ error: 'Şirket bilgilerini güncelleme yetkiniz yok.' }, { status: 403 });
+  }
+
   try {
-    const sessionUser = JSON.parse(session.value);
-    const companyId = sessionUser?.companyId;
+    const companyId = sessionUser.companyId;
 
     if (!companyId) {
       return NextResponse.json({ error: 'Şirket kaydı bulunamadı.' }, { status: 400 });
@@ -84,19 +84,14 @@ export async function PUT(request: Request) {
       },
     });
 
-    // Update session cookie with new company name
+    // Refresh JWT session cookie with new company name
     const newSession = {
       ...sessionUser,
       companyName: updatedCompany.name,
     };
 
-    cookieStore.set('auth_session', JSON.stringify(newSession), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    const newToken = await signJWT(newSession);
+    setSessionCookie(newToken);
 
     return NextResponse.json({
       success: true,

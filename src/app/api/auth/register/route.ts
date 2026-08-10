@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { cookies } from 'next/headers';
+import { hashPassword, signJWT, setSessionCookie, SessionUser } from '@/lib/auth';
 import { Role } from '@prisma/client';
 
 export async function POST(request: Request) {
@@ -10,6 +10,13 @@ export async function POST(request: Request) {
     if (!companyName || !adminName || !email || !password) {
       return NextResponse.json(
         { error: 'Lütfen zorunlu alanları (Şirket Adı, Ad Soyad, E-posta, Şifre) doldurunuz.' },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: 'Şifreniz en az 6 karakter olmalıdır.' },
         { status: 400 }
       );
     }
@@ -26,13 +33,16 @@ export async function POST(request: Request) {
       );
     }
 
+    // Hash password with bcrypt
+    const hashedPassword = await hashPassword(password);
+
     // Create Company and Admin User in a transaction
     const result = await prisma.$transaction(async (tx) => {
       const company = await tx.company.create({
         data: {
           name: companyName.trim(),
-          taxOffice: taxOffice || null,
-          taxNo: taxNo || null,
+          taxOffice: taxOffice ? taxOffice.trim() : null,
+          taxNo: taxNo ? taxNo.trim() : null,
           status: 'ACTIVE',
         },
       });
@@ -45,13 +55,13 @@ export async function POST(request: Request) {
         },
       });
 
-      // Admin User
+      // Admin User with hashed password
       const user = await tx.user.create({
         data: {
           companyId: company.id,
           name: adminName.trim(),
           email: email.toLowerCase().trim(),
-          passwordHash: password, // In production use bcrypt
+          passwordHash: hashedPassword,
           role: Role.TENANT_ADMIN,
           status: 'ACTIVE',
         },
@@ -60,8 +70,8 @@ export async function POST(request: Request) {
       return { company, user };
     });
 
-    // Set Session Cookie
-    const sessionData = {
+    // Prepare session payload
+    const sessionData: SessionUser = {
       id: result.user.id,
       name: result.user.name,
       email: result.user.email,
@@ -70,14 +80,11 @@ export async function POST(request: Request) {
       companyName: result.company.name,
     };
 
-    const cookieStore = cookies();
-    cookieStore.set('auth_session', JSON.stringify(sessionData), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    // Sign JWT token
+    const token = await signJWT(sessionData);
+
+    // Set Session Cookie
+    setSessionCookie(token);
 
     return NextResponse.json({
       success: true,

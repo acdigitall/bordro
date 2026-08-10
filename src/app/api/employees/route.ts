@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { getSessionUser, hasRole } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
-  const cookieStore = cookies();
-  const session = cookieStore.get('auth_session');
+  const sessionUser = await getSessionUser();
 
-  if (!session?.value) {
+  if (!sessionUser) {
     return NextResponse.json({ success: false, employees: [] }, { status: 401 });
   }
 
   try {
-    const sessionUser = JSON.parse(session.value);
-    const companyId = sessionUser?.companyId;
+    const companyId = sessionUser.companyId;
 
     if (!companyId) {
       return NextResponse.json({ success: false, employees: [] });
@@ -53,16 +51,18 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const cookieStore = cookies();
-  const session = cookieStore.get('auth_session');
+  const sessionUser = await getSessionUser();
 
-  if (!session?.value) {
+  if (!sessionUser) {
     return NextResponse.json({ error: 'Yetkisiz işlem.' }, { status: 401 });
   }
 
+  if (!hasRole(sessionUser, ['TENANT_ADMIN', 'SUPER_ADMIN', 'ACCOUNTANT'])) {
+    return NextResponse.json({ error: 'Çalışan ekleme yetkiniz bulunmamaktadır.' }, { status: 403 });
+  }
+
   try {
-    const sessionUser = JSON.parse(session.value);
-    const companyId = sessionUser?.companyId;
+    const companyId = sessionUser.companyId;
 
     if (!companyId) {
       return NextResponse.json({ error: 'Şirket bulunamadı.' }, { status: 400 });
@@ -112,16 +112,18 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const cookieStore = cookies();
-  const session = cookieStore.get('auth_session');
+  const sessionUser = await getSessionUser();
 
-  if (!session?.value) {
+  if (!sessionUser) {
     return NextResponse.json({ error: 'Yetkisiz işlem.' }, { status: 401 });
   }
 
+  if (!hasRole(sessionUser, ['TENANT_ADMIN', 'SUPER_ADMIN', 'ACCOUNTANT'])) {
+    return NextResponse.json({ error: 'Çalışan düzenleme yetkiniz bulunmamaktadır.' }, { status: 403 });
+  }
+
   try {
-    const sessionUser = JSON.parse(session.value);
-    const companyId = sessionUser?.companyId;
+    const companyId = sessionUser.companyId;
 
     if (!companyId) {
       return NextResponse.json({ error: 'Şirket bulunamadı.' }, { status: 400 });
@@ -163,16 +165,18 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const cookieStore = cookies();
-  const session = cookieStore.get('auth_session');
+  const sessionUser = await getSessionUser();
 
-  if (!session?.value) {
+  if (!sessionUser) {
     return NextResponse.json({ error: 'Yetkisiz işlem.' }, { status: 401 });
   }
 
+  if (!hasRole(sessionUser, ['TENANT_ADMIN', 'SUPER_ADMIN'])) {
+    return NextResponse.json({ error: 'Çalışan silme yetkiniz bulunmamaktadır.' }, { status: 403 });
+  }
+
   try {
-    const sessionUser = JSON.parse(session.value);
-    const companyId = sessionUser?.companyId;
+    const companyId = sessionUser.companyId;
 
     if (!companyId) {
       return NextResponse.json({ error: 'Şirket bulunamadı.' }, { status: 400 });
@@ -185,7 +189,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Çalışan ID gereklidir.' }, { status: 400 });
     }
 
-    // Soft-delete employee by setting status to TERMINATED
+    // Soft-delete employee by setting status to TERMINATED with companyId filter
     await prisma.employee.updateMany({
       where: { id, companyId },
       data: { status: 'TERMINATED' },
@@ -203,4 +207,3 @@ export async function DELETE(request: Request) {
     );
   }
 }
-
