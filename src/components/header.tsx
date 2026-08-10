@@ -15,6 +15,7 @@ import {
   Users,
   CalendarCheck,
   Settings,
+  BookOpen,
 } from 'lucide-react';
 import { INITIAL_PERIODS } from '@/lib/mock-data';
 
@@ -45,6 +46,7 @@ export function Header() {
     if (pathname.startsWith('/payroll')) return 'Bordro Çalıştırma';
     if (pathname.startsWith('/reports')) return 'Raporlar & Analizler';
     if (pathname.startsWith('/settings')) return 'Sistem Ayarları';
+    if (pathname.startsWith('/guide')) return 'Kullanım Rehberi';
     if (pathname.startsWith('/admin')) return 'SaaS Yönetimi';
     return 'Ana Panel';
   };
@@ -116,6 +118,15 @@ export function Header() {
           >
             <Play className="w-3 h-3 fill-current" />
             <span className="hidden xs:inline">Bordro Hesapla</span>
+          </Link>
+
+          {/* Kullanım Rehberi Button */}
+          <Link
+            href="/guide"
+            className="p-1.5 rounded-lg text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            title="Kullanım Rehberi"
+          >
+            <BookOpen className="w-4 h-4" />
           </Link>
 
           {/* Theme & Notifications */}

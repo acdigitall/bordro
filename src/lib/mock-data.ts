@@ -74,7 +74,7 @@ export const INITIAL_COMPANY: CompanyMock = {
   taxNo: '5480192837',
   address: 'Maslak Mah. Büyükdere Cad. No:142 Şişli / İstanbul',
   logoUrl: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&w=120&h=120&q=80',
-  planName: 'Profesyonel SaaS Paketi',
+  planName: 'Bordro Paketi',
   status: 'ACTIVE',
   employeeCount: 8,
 };

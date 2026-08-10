@@ -1,4 +1,4 @@
-// Türkiye İş ve Vergi Mevzuatına Uygun Bordro Hesaplama Motoru
+// Türkiye İş ve Vergi Mevzuatına Uygun Bordro Hesaplama Motoru (2026 Mevzuatı)
 
 export interface TaxBracket {
   limit: number; // Üst sınır
@@ -15,6 +15,7 @@ export interface PayrollCalculationInput {
   loanInstallment?: number;      // Avans/Borç taksiti
   previousCumulativeMatrah?: number; // Önceki aylardan devreden kümülatif GV matrahı
   taxExemptionType?: string;     // STANDARD, DISABLED_1 (₺6.900), DISABLED_2 (₺4.000), DISABLED_3 (₺1.700)
+  applyMinWageExemption?: boolean; // Asgari ücret vergi istisnası uygulansın mı? (Varsayılan: true)
 }
 
 export interface PayrollCalculationResult {
@@ -54,55 +55,67 @@ export interface PayrollCalculationResult {
   netSalary: number;
 }
 
-// 2026 Varsayılan Mevzuat Parametreleri (Dinamik Ayarlardan Override Edilebilir)
-export const DEFAULT_MIN_GROSS_WAGE = 20002.50; // Asgari Ücret Brüt
+// 2026 Varsayılan Mevzuat Parametreleri
+export const DEFAULT_MIN_GROSS_WAGE = 20002.50; // Asgari Ücret Brüt (2026)
 export const DEFAULT_SGK_CEILING = 150018.75;  // Asgari Ücretin 7.5 katı
 export const DEFAULT_STAMP_TAX_RATE = 0.00759; // Binde 7.59
 
+// 2026 Asgari Ücret Vergi İstisnası Sabitleri
+export const DEFAULT_MIN_WAGE_GV_EXEMPTION = 4211.33; // 2026 Aylık Gelir Vergisi İstisna Tutarı (₺)
+export const DEFAULT_MIN_WAGE_DV_EXEMPTION = 250.70;  // 2026 Aylık Damga Vergisi İstisna Tutarı (₺)
+
+// 2026 Gelir Vergisi Dilimleri (Ücret Gelirleri)
 export const DEFAULT_TAX_BRACKETS: TaxBracket[] = [
-  { limit: 110000, rate: 0.15 },
-  { limit: 230000, rate: 0.20 },
-  { limit: 870000, rate: 0.27 },
-  { limit: 3000000, rate: 0.35 },
+  { limit: 190000, rate: 0.15 },
+  { limit: 400000, rate: 0.20 },
+  { limit: 1500000, rate: 0.27 },
+  { limit: 5300000, rate: 0.35 },
   { limit: Infinity, rate: 0.40 },
 ];
 
 /**
- * Kümülatif Matrah Dilim Sistemi ile Gelir Vergisi Hesaplar
+ * Herhangi bir kümülatif matrahın vergi dilimlerindeki TOPLAM tutarını hesaplar.
+ */
+export function calculateCumulativeTax(
+  cumMatrah: number,
+  brackets: TaxBracket[] = DEFAULT_TAX_BRACKETS
+): number {
+  if (cumMatrah <= 0) return 0;
+  let tax = 0;
+  for (let i = 0; i < brackets.length; i++) {
+    const prevLimit = i === 0 ? 0 : brackets[i - 1].limit;
+    const currentLimit = brackets[i].limit;
+    const rate = brackets[i].rate;
+
+    if (cumMatrah > prevLimit) {
+      const taxableInBracket = Math.min(cumMatrah, currentLimit) - prevLimit;
+      if (taxableInBracket > 0) {
+        tax += taxableInBracket * rate;
+      }
+    }
+  }
+  return tax;
+}
+
+/**
+ * Kümülatif Matrah Fark Yöntemi ile O Ayın İstisnasız Gelir Vergisini Hesaplar
+ * (Adım 3-5: yeni_kümülatif_vergi - önceki_kümülatif_vergi)
  */
 export function calculateBracketIncomeTax(
   currentMatrah: number,
   prevCumulativeMatrah: number,
   brackets: TaxBracket[] = DEFAULT_TAX_BRACKETS
 ): number {
-  let tax = 0;
-  let remainingMatrah = currentMatrah;
-  let runningMatrah = prevCumulativeMatrah;
-
-  for (let i = 0; i < brackets.length; i++) {
-    const prevLimit = i === 0 ? 0 : brackets[i - 1].limit;
-    const currentLimit = brackets[i].limit;
-    const rate = brackets[i].rate;
-
-    if (runningMatrah < currentLimit && remainingMatrah > 0) {
-      const taxableInThisBracket = Math.min(
-        remainingMatrah,
-        currentLimit - Math.max(runningMatrah, prevLimit)
-      );
-
-      if (taxableInThisBracket > 0) {
-        tax += taxableInThisBracket * rate;
-        remainingMatrah -= taxableInThisBracket;
-        runningMatrah += taxableInThisBracket;
-      }
-    }
-  }
-
-  return tax;
+  if (currentMatrah <= 0) return 0;
+  const prevCum = Math.max(0, prevCumulativeMatrah);
+  const newCum = prevCum + currentMatrah;
+  const newCumTax = calculateCumulativeTax(newCum, brackets);
+  const prevCumTax = calculateCumulativeTax(prevCum, brackets);
+  return Math.max(0, newCumTax - prevCumTax);
 }
 
 /**
- * Türkiye Bordro Ana Hesaplama Fonksiyonu
+ * Türkiye Bordro Ana Hesaplama Fonksiyonu (2026 Mevzuatı)
  */
 export function calculatePayroll(input: PayrollCalculationInput): PayrollCalculationResult {
   const baseSalary = Math.max(0, input.baseSalary || 0);
@@ -113,6 +126,7 @@ export function calculatePayroll(input: PayrollCalculationInput): PayrollCalcula
   const deductionsInput = Math.max(0, input.deductions || 0);
   const loanInstallmentInput = Math.max(0, input.loanInstallment || 0);
   const prevCumMatrah = Math.max(0, input.previousCumulativeMatrah || 0);
+  const applyMinWageExemption = input.applyMinWageExemption ?? true;
 
   // Saatlik ücret ve fazla mesai tutarı
   const hourlyRate = baseSalary / 225; // Türk İş Kanununa göre aylık çalışma saati 225
@@ -121,20 +135,20 @@ export function calculatePayroll(input: PayrollCalculationInput): PayrollCalcula
   // Brüt Toplam Kazanç
   const totalGrossEarnings = baseSalary + totalIncome + overtimeAmount + commissionAmount;
 
-  // SGK Tavan Kontrolü
+  // SGK İşçi Payları (Adım 1: %14 SGK + %1 İşsizlik)
   const sgkEmployeeMatrah = Math.min(totalGrossEarnings, DEFAULT_SGK_CEILING);
   const sgkEmployee = sgkEmployeeMatrah * 0.14;
   const unemploymentEmployee = sgkEmployeeMatrah * 0.01;
   const totalSgkEmployee = sgkEmployee + unemploymentEmployee;
 
-  // SGK İşveren Hesabı (%15.5 teşvikli + %2 işsizlik)
+  // SGK İşveren Payları (%15.5 5 puan teşvikli + %2 işsizlik)
   const sgkEmployer = sgkEmployeeMatrah * 0.155;
   const unemploymentEmployer = sgkEmployeeMatrah * 0.02;
 
   // Gelir Vergisi Matrahı
   const incomeTaxMatrah = Math.max(0, totalGrossEarnings - totalSgkEmployee);
   
-  // Engellik İndirimi
+  // Engellilik İndirimi
   let disabilityDeduction = 0;
   if (input.taxExemptionType === 'DISABLED_1') disabilityDeduction = 6900;
   else if (input.taxExemptionType === 'DISABLED_2') disabilityDeduction = 4000;
@@ -142,19 +156,20 @@ export function calculatePayroll(input: PayrollCalculationInput): PayrollCalcula
 
   const netIncomeTaxMatrah = Math.max(0, incomeTaxMatrah - disabilityDeduction);
 
-  // Kümülatif Gelir Vergisi
-  const rawIncomeTax = calculateBracketIncomeTax(netIncomeTaxMatrah, prevCumMatrah);
+  // Kümülatif Gelir Vergisi (Adım 3 - 5: Fark Yöntemi)
+  const rawIncomeTax = calculateBracketIncomeTax(netIncomeTaxMatrah, prevCumMatrah, DEFAULT_TAX_BRACKETS);
 
-  // Asgari Ücret Gelir Vergisi İstisnası Hesaplama
-  const minWageSgk = DEFAULT_MIN_GROSS_WAGE * 0.15; // %14 + %1
-  const minWageGvMatrah = DEFAULT_MIN_GROSS_WAGE - minWageSgk;
-  const minWageExemptionGV = Math.min(rawIncomeTax, minWageGvMatrah * 0.15); // İlk dilim %15
-
+  // Asgari Ücret Gelir Vergisi İstisnası (Adım 6: MAX(0, bu_ayın_istisnasız_vergisi - 4.211,33))
+  const minWageExemptionGV = applyMinWageExemption
+    ? Math.min(rawIncomeTax, DEFAULT_MIN_WAGE_GV_EXEMPTION)
+    : 0;
   const netIncomeTax = Math.max(0, rawIncomeTax - minWageExemptionGV);
 
-  // Damga Vergisi Hesabı
+  // Damga Vergisi Hesabı (Adım 7: MAX(0, brüt * %0.759 - 250.70))
   const rawStampTax = totalGrossEarnings * DEFAULT_STAMP_TAX_RATE;
-  const minWageExemptionDV = DEFAULT_MIN_GROSS_WAGE * DEFAULT_STAMP_TAX_RATE;
+  const minWageExemptionDV = applyMinWageExemption
+    ? Math.min(rawStampTax, DEFAULT_MIN_WAGE_DV_EXEMPTION)
+    : 0;
   const netStampTax = Math.max(0, rawStampTax - minWageExemptionDV);
 
   // Net Maaş

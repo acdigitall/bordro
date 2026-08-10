@@ -171,6 +171,65 @@ export default function TaxSettingsPage() {
                 </div>
               </div>
             </div>
+
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider text-xs flex items-center justify-between">
+                <span>2026 Yılı Gelir Vergisi Dilimleri & İstisnalar</span>
+                <span className="text-[10px] font-normal text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                  GVK 193 Sayılı Kanun Uyumlu
+                </span>
+              </h3>
+
+              <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                      <th className="p-2.5">Dilim</th>
+                      <th className="p-2.5">Kümülatif Matrah Aralığı</th>
+                      <th className="p-2.5 text-right">Vergi Oranı</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-mono text-slate-700 dark:text-slate-300">
+                    <tr>
+                      <td className="p-2.5 font-bold">1. Dilim</td>
+                      <td className="p-2.5">0 – 190.000 TL</td>
+                      <td className="p-2.5 text-right font-bold text-sky-600 dark:text-sky-400">%15</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold">2. Dilim</td>
+                      <td className="p-2.5">190.000 – 400.000 TL</td>
+                      <td className="p-2.5 text-right font-bold text-sky-600 dark:text-sky-400">%20</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold">3. Dilim</td>
+                      <td className="p-2.5">400.000 – 1.500.000 TL</td>
+                      <td className="p-2.5 text-right font-bold text-amber-600 dark:text-amber-400">%27</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold">4. Dilim</td>
+                      <td className="p-2.5">1.500.000 – 5.300.000 TL</td>
+                      <td className="p-2.5 text-right font-bold text-purple-600 dark:text-purple-400">%35</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold">5. Dilim</td>
+                      <td className="p-2.5">5.300.000 TL ve üzeri</td>
+                      <td className="p-2.5 text-right font-bold text-rose-600 dark:text-rose-400">%40</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-sky-50/60 dark:bg-sky-950/40 p-4 rounded-xl border border-sky-200 dark:border-sky-800/60">
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">Aylık GV İstisna Tutarı:</span>
+                  <span className="font-bold font-mono text-sky-700 dark:text-sky-300 block text-sm">₺ 4.211,33 TL</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400">Aylık DV İstisna Tutarı:</span>
+                  <span className="font-bold font-mono text-sky-700 dark:text-sky-300 block text-sm">₺ 250,70 TL</span>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>

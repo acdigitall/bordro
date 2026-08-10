@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/sidebar';
 import { Header } from '@/components/header';
-import { Banknote, Download } from 'lucide-react';
+import { Banknote, Download, CheckCircle2, X } from 'lucide-react';
 import { INITIAL_EMPLOYEES, EmployeeMock } from '@/lib/mock-data';
 import { formatCurrency, calculatePayroll } from '@/lib/payroll-engine';
 
 export default function BankListsReportPage() {
   const [employees, setEmployees] = useState<EmployeeMock[]>([]);
   const [selectedBank, setSelectedBank] = useState('Garanti BBVA');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -46,6 +47,11 @@ export default function BankListsReportPage() {
     return sum + res.netSalary;
   }, 0);
 
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
   const handleDownloadBankFile = () => {
     let content = `TCKN;AD_SOYAD;BANKA;IBAN;NET_TUTAR;ACIKLAMA\n`;
     employees.forEach((emp) => {
@@ -54,22 +60,24 @@ export default function BankListsReportPage() {
         previousCumulativeMatrah: emp.cumulativeMatrah || 0,
         taxExemptionType: emp.taxExemptionType || 'STANDARD',
       });
-      content += `${emp.tcNo};${emp.firstName} ${emp.lastName};${selectedBank};${emp.iban};${res.netSalary.toFixed(2)};Agustos 2026 Maas Odemesi\n`;
+      content += `${emp.tcNo || '11111111111'};${emp.firstName} ${emp.lastName};${selectedBank};${emp.iban || 'TR000000000000000000000000'};${res.netSalary.toFixed(2)};Agustos 2026 Maas Odemesi\n`;
     });
 
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `banka_maas_disket_${selectedBank.replace(/[^a-zA-Z0-9]/g, '_')}_2026_08.txt`;
+    a.download = `banka_maas_disket_${selectedBank.replace(/[^a-zA-Z0-9]/g, '_')}_2026_08.csv`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+
+    showToast(`${selectedBank} Toplu Maaş Transfer Dosyası (.CSV) bilgisayarınıza indirildi.`);
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden font-sans">
+    <div className="flex h-[100dvh] bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden font-sans relative">
       <Sidebar />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -79,7 +87,7 @@ export default function BankListsReportPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
             <div>
               <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Banknote className="w-5 h-5 text-slate-600 dark:text-slate-400" /> Banka Toplu Ödeme Listesi (Maaş Disketi)
+                <Banknote className="w-5 h-5 text-sky-600 dark:text-sky-400" /> Banka Toplu Ödeme Listesi (Maaş Disketi)
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Garanti BBVA, Akbank, İş Bankası, Yapı Kredi, Ziraat Bankası uyumlu otomatik maaş transfer dosyası
@@ -103,9 +111,9 @@ export default function BankListsReportPage() {
               <button
                 onClick={handleDownloadBankFile}
                 disabled={employees.length === 0}
-                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded transition-colors shadow-sm disabled:opacity-50"
+                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
               >
-                <Download className="w-4 h-4" /> Banka Disketini İndir (.TXT)
+                <Download className="w-4 h-4" /> Banka Disketini İndir (.CSV)
               </button>
             </div>
           </div>
@@ -135,7 +143,7 @@ export default function BankListsReportPage() {
           </div>
 
           {/* Table */}
-          <div className="b2b-card rounded-lg overflow-hidden">
+          <div className="b2b-card rounded-lg overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
@@ -148,7 +156,7 @@ export default function BankListsReportPage() {
                     <th className="p-3 text-right">Ödenecek Net Tutar</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
                   {employees.map((emp, index) => {
                     const res = calculatePayroll({
                       baseSalary: emp.baseSalary,
@@ -161,13 +169,13 @@ export default function BankListsReportPage() {
                         <td className="p-3 font-mono font-bold text-slate-500">
                           #{index + 1} - {emp.employeeCode}
                         </td>
-                        <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">
+                        <td className="p-3 font-semibold font-sans text-slate-900 dark:text-slate-100">
                           {emp.firstName} {emp.lastName}
                         </td>
                         <td className="p-3 font-mono text-slate-500">
                           {emp.tcNo}
                         </td>
-                        <td className="p-3 text-slate-700 dark:text-slate-300 font-medium">
+                        <td className="p-3 font-sans text-slate-700 dark:text-slate-300 font-medium">
                           {emp.bankName || selectedBank}
                         </td>
                         <td className="p-3 font-mono text-[11px] text-slate-600 dark:text-slate-400">
@@ -185,7 +193,22 @@ export default function BankListsReportPage() {
           </div>
         </main>
       </div>
+
+      {/* Sleek In-App Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 max-w-sm bg-slate-900 text-slate-100 px-4 py-3 rounded-xl border border-slate-700 shadow-2xl flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center gap-2.5 text-xs font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="text-slate-400 hover:text-white p-1 rounded-md transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
-
