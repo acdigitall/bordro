@@ -208,7 +208,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-sky-500/10 via-indigo-500/5 to-transparent pointer-events-none" />
 
       {/* Workspace Header */}
-      <div className="px-4 py-4 border-b border-slate-800/60 flex items-center justify-between relative z-10">
+      <div className="px-4 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-4 border-b border-slate-800/60 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="relative w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-sky-500/20 to-blue-600/30 border border-sky-400/30 flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.2)]">
             <span className="font-mono text-xs font-extrabold tracking-wider text-sky-300">
@@ -375,7 +375,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       </div>
 
       {/* User Footer Card */}
-      <div className="p-3 m-3 bg-slate-900/80 border border-slate-800/80 rounded-2xl flex items-center justify-between relative z-10 shadow-lg backdrop-blur-md">
+      <div className="p-3 mx-3 mt-3 mb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] bg-slate-900/80 border border-slate-800/80 rounded-2xl flex items-center justify-between relative z-10 shadow-lg backdrop-blur-md">
         <div className="flex items-center gap-2.5 overflow-hidden">
           <div className="relative w-8 h-8 shrink-0 rounded-xl bg-gradient-to-br from-sky-600 to-blue-700 text-white flex items-center justify-center font-mono text-[11px] font-bold shadow-md shadow-sky-900/40">
             {userInitials || 'CY'}
@@ -403,7 +403,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex h-screen shrink-0 sticky top-0">
+      <div className="hidden md:flex h-[100dvh] shrink-0 sticky top-0">
         {sidebarContent}
       </div>
 
@@ -420,7 +420,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
           {/* Floating Close Button outside drawer */}
           <button
             onClick={handleCloseDrawer}
-            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-slate-900/90 text-slate-300 hover:text-white border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95"
+            className="absolute top-[calc(1rem+env(safe-area-inset-top,0px))] right-4 z-20 p-2 rounded-full bg-slate-900/90 text-slate-300 hover:text-white border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95"
             title="Menüyü Kapat"
           >
             <X className="w-5 h-5" />

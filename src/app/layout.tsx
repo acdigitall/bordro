@@ -1,9 +1,20 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Türkiye Bordro SaaS — Multi-Tenant Payroll Platform',
   description: 'Türkiye İş ve Vergi Mevzuatına Uygun Multi-Tenant Bordro ve İK Yönetim Platformu',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#090d16' },
+  ],
 };
 
 export default function RootLayout({
